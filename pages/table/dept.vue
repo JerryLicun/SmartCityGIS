@@ -1,0 +1,357 @@
+<template>
+  <div class="panel">
+    <panel-title :title="$route.meta.title">
+      <el-button @click.stop="on_refresh" size="small">
+        <i class="fa fa-refresh"></i>
+      </el-button>
+      <router-link :to="{name: 'addDept'}" tag="span">
+        <el-button type="primary" icon="plus" size="small">添加数据</el-button>
+      </router-link>
+    </panel-title>
+    <div class="panel-body">
+      <div style="width: 30%;margin-bottom: 20px">
+        <el-input placeholder="请输入内容" v-model="searchkey" class="input-with-select">
+          <el-select v-model="searchid" slot="prepend" placeholder="请选择方式" style="width: 130px;">
+            <el-option label="按部门名查询" value="deptname"></el-option>
+            <el-option label="按组织名查询" value="organname"></el-option>
+          </el-select>
+          <el-button slot="append" @click="submit_search"><i class="fa fa-search" aria-hidden="true"></i></el-button>
+        </el-input>
+      </div>
+      <el-table
+        :data="table_data"
+        v-loading="load_data"
+        element-loading-text="拼命加载中"
+        border
+        @selection-change="on_batch_select">
+        <el-table-column
+          type="selection"
+          :selectable="selectable"
+          width="55">
+        </el-table-column>
+        <el-table-column
+          label="序号"
+          width="100">
+          <template scope="scope"><span>{{scope.$index+(currentPage - 1) * length + 1}} </span></template>
+        </el-table-column>
+        <el-table-column
+          prop="dept_id"
+          label="部门ID"
+          width="100"
+          v-if="false"
+        >
+        </el-table-column>
+        <el-table-column
+          prop="dept_name"
+          label="部门名称"
+          width="390"
+        >
+        </el-table-column>
+        <el-table-column
+          prop="organ_name"
+          label="所属组织"
+          width="516"
+        >
+        </el-table-column>
+        <el-table-column
+          prop="joblist"
+          label="部门岗位"
+          width="390"
+        >
+          <template slot-scope="scope">
+            <div v-for='v in scope.row.joblist'>
+              <div style="margin-top:4px;display: flex;justify-content:space-between;border-bottom: 1px solid #dfe6ec;
+              padding: 1px 3px;">
+                {{v.jobname}}
+                <el-button plain v-if="v.jobid!=get_user_info.user.jobid"  size="mini" icon="delete" @click="delete_job(v.jobid)"></el-button>
+              </div>
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column
+          label="操作"
+          width="165">
+          <template scope="props">
+            <router-link :to="{name: 'saveDept', params: {dept_id: props.row.dept_id}}" tag="span">
+              <el-button type="info" size="small" icon="edit">修改</el-button>
+            </router-link>
+            <el-button v-if="props.row.dept_id != get_user_info.dept_id" type="danger" size="small" icon="delete" @click="delete_dept(props.row.dept_id)">删除</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+      <bottom-tool-bar>
+        <el-button
+          type="danger"
+          icon="delete"
+          size="small"
+          :disabled="batch_select.length === 0"
+          @click="on_batch_del"
+          slot="handler">
+          <span>批量删除</span>
+        </el-button>
+        <div slot="page">
+          <div style="width: 120px;transform: translate(-110px,26px);color:#48576a;font-size: 14px">
+            每页显示
+            <el-input ref="iplength" v-model="length" max="99" min="3" size="mini" @blur="lengthchange" style="width:40px;"></el-input>
+            条
+          </div>
+          <el-pagination
+            @current-change="handleCurrentChange"
+            :current-page="currentPage"
+            :page-size="length"
+            layout="total, prev, pager, next"
+            :total="total">
+          </el-pagination>
+        </div>
+      </bottom-tool-bar>
+    </div>
+  </div>
+</template>
+<script type="text/javascript">
+  import {panelTitle, bottomToolBar} from 'components'
+  import axios from 'axios'
+  import {mapGetters} from 'vuex'
+  import {GET_USER_INFO} from 'store/getters/type'
+  const url ="/api/deptserver"
+  export default{
+    data(){
+      return {
+        idlist:"",
+        searchkey:"",
+        searchid:"",
+        //当前页码
+        currentPage: 1,
+        //数据总条目
+        total: 0,
+        //每页显示多少条数据
+        length: 5,
+        //请求时的loading效果
+        load_data: false,
+        //批量选择数组
+        batch_select: [],
+        table_data:[]
+      }
+    },
+    computed:{
+      ...mapGetters({
+        get_user_info: GET_USER_INFO
+      })
+    },
+    components: {
+      panelTitle,
+      bottomToolBar,
+    },
+    created(){
+      this.get_table_data()
+      if(!this.get_user_info.user.isadmin){
+        this.$router.replace({path:'/403'})
+      }
+    },
+    methods: {
+      selectable(row){
+        if(row.dept_id!=this.get_user_info.dept_id){
+          return true
+        }else{
+          return false
+        }
+      },
+      lengthchange(){
+        var  val =this.$refs.iplength.value
+        if(parseInt(this.$refs.iplength.value)){
+          if(val>10){
+            this.length=10
+          }else if(val<3){
+            this.length=3
+          }else{
+            this.length=val
+          }
+        }else{
+          this.length=5
+        }
+        if(this.searchid !== ""&& this.searchkey!==""){
+          this.submit_search()
+        }else if (this.searchkey === ""){
+          this.get_table_data()
+        }
+      },
+      submit_search() {
+        if (this.searchkey === ""){
+          this.get_table_data()
+        }else if(this.searchid === "deptname"){
+          axios.get(url,{
+            params:{
+              method:"searchListbyDeptName",
+              page: this.currentPage,
+              length: this.length,
+              dept_name:this.searchkey
+            }
+          }).then((res)=>{
+            // console.log(res)
+            this.table_data=res.data.result
+            this.page=res.data.page
+            this.total = res.data.total
+            setTimeout(1000)
+            this.load_data = false
+          })
+        }else if(this.searchid === "organname"){
+          axios.get(url,{
+            params:{
+              method:"searchListbyOrganName",
+              page: this.currentPage,
+              length: this.length,
+              organ_name:this.searchkey
+            }
+          }).then((res)=>{
+            // console.log(res)
+            this.table_data=res.data.result
+            this.page=res.data.page
+            this.total = res.data.total
+            setTimeout(1000)
+            this.load_data = false
+          })
+        }
+      },
+      on_refresh(){
+        this.get_table_data()
+      },
+      //获取数据
+      // $fetch.api_table 等于api/index.js
+      get_table_data(){
+        this.load_data = true
+        axios.get(url,{
+          params:{
+            method:"deptList",
+            page: this.currentPage,
+            length: this.length
+          }
+        }).then((res)=>{
+          this.table_data=res.data.result
+          this.page=res.data.page
+          this.total = res.data.total
+          this.load_data = false
+        })
+      },
+      delete_job(jobid){
+        this.$confirm('此操作将删除该数据, 是否继续?', '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        })
+          .then(() => {
+            this.load_data = true
+            axios.get("/api/jobserver",{
+              params:{
+                method:"delJob",
+                jobid:jobid,
+              }
+            })
+              .then((res) => {
+                // console.log(res)
+                this.$message.success(res.data)
+                this.load_data = false
+                this.on_refresh()
+              })
+              .catch((err) => {
+                this.load_data = false
+                var message =""
+                if(err.response.status === 404){
+                  message="删除失败！"
+                }
+                this.$notify.info({
+                  title: '温馨提示',
+                  message:message,
+                })
+              })
+          })
+      },
+      //单个删除
+      delete_dept(deptid){
+        this.$confirm('此操作将删除该数据, 是否继续?', '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        })
+          .then(() => {
+            this.load_data = true
+            axios.get(url,{
+              params:{
+                method:"delDept",
+                dept_id:deptid ,
+              }
+            }).then((res) => {
+              this.$message.success(res.data)
+              this.load_data = false
+              this.on_refresh()
+            })
+              .catch((err) => {
+                this.load_data = false
+                var message =""
+                if(err.response.status === 404){
+                  message="删除失败！"
+                }
+                this.$notify.info({
+                  title: '温馨提示',
+                  message:message,
+                })
+              })
+
+          })
+          .catch(() => {
+          })
+      },
+      //页码选择
+      handleCurrentChange(val) {
+        this.currentPage = val
+        if(this.searchid !== ""&& this.searchkey!==""){
+          this.submit_search()
+        }else if (this.searchkey === ""){
+          this.get_table_data()
+        }
+      },
+      //批量选择
+      on_batch_select(val){
+        this.batch_select = val
+      },
+      //批量删除
+      on_batch_del(){
+        this.$confirm('此操作将批量删除选择数据, 是否继续?', '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        })
+          .then(() => {
+            this.load_data = true
+            this.batch_select.forEach ((item)=>{
+              this.idlist+=item.dept_id+","
+            })
+            axios.get(url, {
+              params: {
+                method: "delDeptlist",
+                list: this.idlist,
+              }
+            })
+              .then((res) => {
+                // console.log(res)
+                this.$message.success(res.data)
+                this.load_data = false
+                this.on_refresh()
+                this.idlist=[]
+              })
+              .catch((err) => {
+                this.load_data = false
+                var message = ""
+                if (err.response.status === 404) {
+                  message = "删除失败！"
+                }
+                this.$notify.info({
+                  title: '温馨提示',
+                  message: message,
+                })
+              })
+          })
+          .catch(() => {
+          })
+      }
+    }
+  }
+</script>
