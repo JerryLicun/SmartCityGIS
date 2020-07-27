@@ -140,7 +140,7 @@ public class NewsDao {
 		List<NewsDto> newsdtolist = new ArrayList<NewsDto>();
 		try {
 			String sql ="select news_id,newstitle ,newsauthor,keyword,createtime,hot " +
-					"from news_info ORDER BY hot DESC,createtime DESC limit ?,?";
+					"from news_info ORDER BY hot DESC,createtime DESC  limit ?,?";
 			conn =DBUtil.getConnection();
 			pstmt = conn.prepareStatement(sql);	
 			pstmt.setInt(1, starindex);

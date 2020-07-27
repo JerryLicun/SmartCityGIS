@@ -26,7 +26,7 @@ import org.apache.commons.logging.LogFactory;
 
 import com.hzau.service.UserService;
 
-@WebServlet("/api/personserver")
+@WebServlet("/personserver")
 public class AdminPersonServlet extends HttpServlet {
 	private UserService userService = new UserService();
 	private  Log logger = LogFactory.getLog(this.getClass());

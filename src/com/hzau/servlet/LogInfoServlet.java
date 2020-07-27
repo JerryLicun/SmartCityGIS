@@ -15,7 +15,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.hzau.service.LogService;
 import com.hzau.entity.*;
 
-@WebServlet("/api/loginfoserver")
+@WebServlet("/loginfoserver")
 public class LogInfoServlet extends HttpServlet {
 	private LogService logService = new LogService();
 	

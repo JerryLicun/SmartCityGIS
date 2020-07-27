@@ -21,7 +21,7 @@ import com.hzau.entity.Dept;
 import com.hzau.entity.Organ;
 import com.hzau.service.DeptService;
 
-@WebServlet("/api/deptserver")
+@WebServlet("/deptserver")
 public class DeptServlet extends HttpServlet {
 	private DeptService deptService = new DeptService();
 	private  Log logger = LogFactory.getLog(this.getClass());

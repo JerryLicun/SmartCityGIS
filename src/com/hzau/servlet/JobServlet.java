@@ -22,7 +22,7 @@ import com.hzau.entity.Person;
 import com.hzau.service.JobService;
 import com.hzau.service.UserService;
 
-@WebServlet("/api/jobserver")
+@WebServlet("/jobserver")
 public class JobServlet extends HttpServlet {
 
 	private JobService jobService = new JobService();

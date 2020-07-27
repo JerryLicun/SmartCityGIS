@@ -19,7 +19,7 @@ import com.hzau.dto.OrganDto;
 import com.hzau.entity.Organ;
 import com.hzau.service.OrganService;
 
-@WebServlet("/api/organserver")
+@WebServlet("/organserver")
 public class OrganServlet extends HttpServlet {
 	private OrganService organService =new OrganService();
 	private  Log logger = LogFactory.getLog(this.getClass());

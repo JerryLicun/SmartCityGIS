@@ -23,7 +23,7 @@ import com.hzau.entity.Person;
 import com.hzau.service.NewsService;
 import com.hzau.service.UserService;
 
-@WebServlet("/api/newserver")
+@WebServlet("/newserver")
 public class NewsServlet extends HttpServlet {
 	private NewsService newService= new NewsService();
 	private  Log logger = LogFactory.getLog(this.getClass());

@@ -20,7 +20,7 @@ import com.hzau.entity.Inform;
 import com.hzau.service.InfoService;
 
 
-@WebServlet("/api/infoserver")
+@WebServlet("/infoserver")
 public class InfoServlet extends HttpServlet {
 	private InfoService infoService= new InfoService();
 	private  Log logger = LogFactory.getLog(this.getClass());

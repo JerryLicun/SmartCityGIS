@@ -21,7 +21,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.hzau.entity.Person;
 import com.hzau.service.UserService;
 
-@WebServlet("/api/logserver")
+@WebServlet("/logserver")
 public class UserServlet extends HttpServlet {
 	private UserService userService = new UserService();
 	public void doGet(HttpServletRequest request, HttpServletResponse response)
